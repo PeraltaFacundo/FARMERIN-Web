@@ -72,7 +72,7 @@ function Grafico() {
 
   return (
     <Layout
-      titulo="Grafico de ingreso"
+    titulo="Herramientas"
     >
     <div className="containerGrafico">
     <div className="chartContainer">

@@ -39,7 +39,9 @@ const Monitor = () => {
     }, [tamboSel, firebase]);
 console.log('animal', animal)
     return (
-        <Layout titulo="Monitor">
+        <Layout
+        titulo="Herramientas"
+        >
             <div>
                 {loading ? (
                     <div className="loaderContainer">

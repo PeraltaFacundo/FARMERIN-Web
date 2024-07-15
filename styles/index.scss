@@ -945,3 +945,26 @@ contact-section, .social-section {
     margin: 0;
   }
 }
+
+// LAYAUT DE NOREGS
+.listaNoRegs {
+  display: flex;
+  justify-content: space-between; /* Espacia los elementos para que estén a los extremos */
+  align-items: center; /* Alinea verticalmente al centro */
+}
+
+.tituloNoRegs {
+  margin-left: 20px; /* Elimina el margen por defecto del título */
+  font-size: 25px;
+  font-family: 'Times New Roman';
+}
+
+.excelNoRegs {
+  margin-right: 15px;
+  padding: 5px 50px;
+  font-size: 16px;
+  background-color: #28a745;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+}
