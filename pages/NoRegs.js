@@ -44,8 +44,12 @@ function NoRegs() {
 
                 if (table) {
                   const parsedData = tableToDataFrame(table);
-                  setData(parsedData);
-                  checkAnimals(parsedData);
+                  if (parsedData.length === 0) {
+                    setLoading(false);
+                  } else {
+                    setData(parsedData);
+                    checkAnimals(parsedData);
+                  }
                 } else {
                   console.error('No se encontró la tabla en los datos obtenidos');
                 }
@@ -70,7 +74,7 @@ function NoRegs() {
       const updatedData = await Promise.all(
         parsedData.map(async (item) => {
           const erp = item.RFID; // Asume que el RFID está en una columna llamada 'RFID'
-          console.log('Verificando ERP: ${erp} para tamboId: ${tamboSel.id}');
+          console.log(`Verificando ERP: ${erp} para tamboId: ${tamboSel.id}`);
           const querySnapshot = await firebase.db.collection('animal')
             .where('erp', '==', erp)
             .where('idtambo', '==', tamboSel.id)
@@ -78,7 +82,7 @@ function NoRegs() {
 
           if (!querySnapshot.empty) {
             const animalData = querySnapshot.docs[0].data();
-            console.log('Datos encontrados para ERP ${erp}:', animalData);
+            console.log(`Datos encontrados para ERP ${erp}:`, animalData);
             return {
               eRP: erp,
               RP: animalData.rp || 'N/A',
@@ -86,7 +90,7 @@ function NoRegs() {
               'EST. REP': animalData.estrep || 'N/A',
             };
           } else {
-            console.log('No se encontraron datos para ERP ${erp} en tamboId ${tamboSel.id}');
+            console.log(`No se encontraron datos para ERP ${erp} en tamboId ${tamboSel.id}`);
             return {
               eRP: erp,
               RP: 'No Registrada',
@@ -102,11 +106,22 @@ function NoRegs() {
     obtenerNoReg();
   }, [tamboSel, firebase]);
 
+  const s2ab = s => {
+    const buf = new ArrayBuffer(s.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xff;
+    return buf;
+  };
+
   const handleDownload = () => {
     const ws = XLSX.utils.json_to_sheet(matchedAnimals);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'NoRegs');
-    XLSX.writeFile(wb, 'NoRegs.xlsx');
+
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+    const fechaActual = new Date().toISOString().slice(0, 10);
+    const nombreArchivo = `NoRegistradas_${fechaActual}.xlsx`;
+    saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), nombreArchivo);
   };
 
   //states de ordenamiento
@@ -134,7 +149,10 @@ function NoRegs() {
       <Contenedor>
         <StickyTable height={450}>
           {matchedAnimals.length === 0 ? (
-            <p>No hay datos de no Registradas disponibles</p>
+            <div className="divNoReg">
+            <h1 className="tituloNodispoError">Aviso </h1>
+            <h2 className="tituloNodispoError">No hay datos de animales no registrados disponibles </h2>
+            </div>
           ) : (
             <Table responsive>
               <thead>
