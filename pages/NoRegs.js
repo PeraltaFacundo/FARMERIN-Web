@@ -23,7 +23,7 @@ const tableToDataFrame = (table) => {
 
 function NoRegs() {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Estado para controlar la carga
   const { firebase, tamboSel } = useContext(FirebaseContext);
   const [matchedAnimals, setMatchedAnimals] = useState([]);
 
@@ -36,21 +36,17 @@ function NoRegs() {
             const noregURL = docSnapshot.data().noreg;
 
             if (noregURL) {
-              try {
-                const response = await axios.get(noregURL);
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(response.data, 'text/html');
-                const table = doc.querySelector('table');
+              const response = await axios.get(noregURL);
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(response.data, 'text/html');
+              const table = doc.querySelector('table');
 
-                if (table) {
-                  const parsedData = tableToDataFrame(table);
-                  setData(parsedData);
-                  checkAnimals(parsedData);
-                } else {
-                  console.error('No se encontró la tabla en los datos obtenidos');
-                }
-              } catch (error) {
-                console.error('Error al obtener los datos de no registradas:', error);
+              if (table) {
+                const parsedData = tableToDataFrame(table);
+                setData(parsedData);
+                await checkAnimals(parsedData); // Espera a que se complete checkAnimals
+              } else {
+                console.error('No se encontró la tabla en los datos obtenidos');
               }
             } else {
               console.error("El campo no registradas no contiene una URL válida");
@@ -62,45 +58,45 @@ function NoRegs() {
       } catch (error) {
         console.error("Error al obtener el campo no registradas:", error);
       } finally {
-        setLoading(false);
+        setLoading(false); // Actualiza el estado de carga una vez terminado el proceso
       }
-    };
-
-    const checkAnimals = async (parsedData) => {
-      const updatedData = await Promise.all(
-        parsedData.map(async (item) => {
-          const erp = item.RFID; // Asume que el RFID está en una columna llamada 'RFID'
-          console.log('Verificando ERP: ${erp} para tamboId: ${tamboSel.id}');
-          const querySnapshot = await firebase.db.collection('animal')
-            .where('erp', '==', erp)
-            .where('idtambo', '==', tamboSel.id)
-            .get();
-
-          if (!querySnapshot.empty) {
-            const animalData = querySnapshot.docs[0].data();
-            console.log('Datos encontrados para ERP ${erp}:', animalData);
-            return {
-              eRP: erp,
-              RP: animalData.rp || 'N/A',
-              'EST. PRO': animalData.estpro || 'N/A',
-              'EST. REP': animalData.estrep || 'N/A',
-            };
-          } else {
-            console.log('No se encontraron datos para ERP ${erp} en tamboId ${tamboSel.id}');
-            return {
-              eRP: erp,
-              RP: 'No Registrada',
-              'EST. PRO': 'No Registrada',
-              'EST. REP': 'No Registrada',
-            };
-          }
-        })
-      );
-      setMatchedAnimals(updatedData);
     };
 
     obtenerNoReg();
   }, [tamboSel, firebase]);
+
+  const checkAnimals = async (parsedData) => {
+    const updatedData = await Promise.all(
+      parsedData.map(async (item) => {
+        const erp = item.RFID; // Asume que el RFID está en una columna llamada 'RFID'
+
+        // Realiza la consulta con la condición adicional de mbaja vacío
+        const querySnapshot = await firebase.db.collection('animal')
+          .where('erp', '==', erp)
+          .where('idtambo', '==', tamboSel.id)
+          .where('mbaja', '==', '')
+          .get();
+
+        if (!querySnapshot.empty) {
+          const animalData = querySnapshot.docs[0].data();
+          return {
+            eRP: erp,
+            RP: animalData.rp || 'N/A',
+            'EST. PRO': animalData.estpro || 'N/A',
+            'EST. REP': animalData.estrep || 'N/A',
+          };
+        } else {
+          return {
+            eRP: erp,
+            RP: 'No Registrada',
+            'EST. PRO': 'No Registrada',
+            'EST. REP': 'No Registrada',
+          };
+        }
+      })
+    );
+    setMatchedAnimals(updatedData);
+  };
 
   const handleDownload = () => {
     const ws = XLSX.utils.json_to_sheet(matchedAnimals);
@@ -109,7 +105,7 @@ function NoRegs() {
     XLSX.writeFile(wb, 'NoRegs.xlsx');
   };
 
-  //states de ordenamiento
+  // Función para manejar el ordenamiento
   const [orderERP, guardarOrderRp] = useState('asc');
 
   const handleClickRP = e => {
@@ -132,31 +128,45 @@ function NoRegs() {
         <button className="excelNoRegs" onClick={handleDownload}>Excel</button>
       </div>
       <Contenedor>
-        <StickyTable height={450}>
-          {matchedAnimals.length === 0 ? (
-            <p>No hay datos de no Registradas disponibles</p>
-          ) : (
-            <Table responsive>
-              <thead>
-                <tr>
-                  <th onClick={handleClickRP}>eRP  <FaSort size={15} /></th>
-                  <th onClick={handleClickRP}>RP  <FaSort size={15} /></th>
-                  <th onClick={handleClickRP}>EST. PRO  <FaSort size={15} /></th>
-                  <th onClick={handleClickRP}>EST. REP  <FaSort size={15} /></th>
-                </tr>
-              </thead>
-              <tbody>
-                {matchedAnimals.map((row, index) => (
-                  <tr key={index}>
-                    {Object.values(row).map((value, i) => (
-                      <td key={i}>{value}</td>
-                    ))}
+        {loading ? (
+         <div className="loaderContainer">
+         <div className="loaderGrafico">
+           <div className="innerContent">
+             <h1 className="imagenLogo"></h1>
+           </div>
+         </div>
+         <h2 className="textoLoader">OBTENIENDO INFORMACION</h2>
+       </div>
+        ) : (
+          <StickyTable height={450}>
+            {matchedAnimals.length === 0 ? (
+              <div className="divRaciones">
+              <h1 className="tituloRacionesAviso">Aviso </h1>
+              <h2 className="tituloRacionesAviso">No se pudo conectar con el Grafico de Ingreso</h2>
+            </div>
+            ) : (
+              <Table responsive>
+                <thead>
+                  <tr>
+                    <th onClick={handleClickRP}>eRP  <FaSort size={15} /></th>
+                    <th onClick={handleClickRP}>RP  <FaSort size={15} /></th>
+                    <th onClick={handleClickRP}>EST. PRO  <FaSort size={15} /></th>
+                    <th onClick={handleClickRP}>EST. REP  <FaSort size={15} /></th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
-        </StickyTable>
+                </thead>
+                <tbody>
+                  {matchedAnimals.map((row, index) => (
+                    <tr key={index}>
+                      {Object.values(row).map((value, i) => (
+                        <td key={i}>{value}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+          </StickyTable>
+        )}
       </Contenedor>
     </Layout>
   );

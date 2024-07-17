@@ -615,10 +615,7 @@ $icon-size: 35px;
   align-items: center;
 }
 
-.tamboChart img{
-  height: 500px;
-  width: 500px;
-}
+
 .TextoFoto 
 {
   background-color: #1b8aa5; /* Color de fondo amarillo */
@@ -636,8 +633,8 @@ $icon-size: 35px;
 }
 
 .chartContainer img {
-  height: 500px;
-  width: 500px;
+  height: 150px;
+  width: 150px;
 }
 
 .loaderContainer {
@@ -1061,4 +1058,34 @@ contact-section, .social-section {
 .tituloNodispoError:nth-child(2) {
   font-size: 18px;
   font-weight: normal;
+}
+
+// EXEL RACIONES
+.tamboChart {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Alinea el contenido al centro verticalmente */
+}
+.chartHeader {
+  display: flex;
+  justify-content: space-between; /* Espacio entre los elementos (titulo y botón) */
+  width: 100%; /* Opcional: asegura que ocupe el ancho completo */
+  margin-bottom: 10px; /* Espacio opcional entre el encabezado y el gráfico */
+}
+
+.tituloNoRegs {
+  margin: 0; /* Elimina el margen predeterminado */
+}
+
+.excelRaciones {
+  background-color: #28a745; /* Color de fondo del botón */
+  color: white;
+  margin-left: 150px;
+  border-radius: 10px;
+  padding: 5px 10px; /* Espaciado interno del botón */
+  cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+}
+
+.excelRaciones:hover {
+  background-color: #0056b3; /* Cambia el color de fondo al pasar sobre el botón */
 }

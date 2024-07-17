@@ -5,6 +5,13 @@ import 'chart.js/auto';
 import Layout from '../components/layout/layout';
 import { FirebaseContext } from '../firebase2';
 
+// Función para convertir datos a formato Excel
+const convertToExcel = (data) => {
+  const header = Object.keys(data[0]).join('\t') + '\n';
+  const body = data.map(item => Object.values(item).join('\t')).join('\n');
+  return header + body;
+};
+
 function Grafico() {
   const [data, setData] = useState([]); // Inicializa data como array
   const [loading, setLoading] = useState(true); // Estado para controlar la carga
@@ -94,12 +101,6 @@ function Grafico() {
     }
   };
 
-  const convertToExcel = (data) => {
-    const header = Object.keys(data[0]).join('\t') + '\n';
-    const body = data.map(item => Object.values(item).join('\t')).join('\n');
-    return header + body;
-  };
-
   return (
     <Layout titulo="Herramientas">
       <div className="containerGrafico">
@@ -115,12 +116,12 @@ function Grafico() {
             </div>
           ) : (
             data.length > 0 ? (
-              <TamboChart tambo={{ name: tamboSel?.nombre, data }} />
+              <TamboChart tambo={{ name: tamboSel?.nombre, data }} descargarExcel={descargarExcel} />
             ) : (
-              <div className="noDataContainer">
-                <img src='/VacaGrafico.jpg' alt="Imagen de Vaca" />
-                <h2 className='TextoFoto'>¡LOS REGISTROS NO ESTAN DISPONIBLES!</h2>
-              </div>
+              <div className="divRaciones">
+              <h1 className="tituloRacionesAviso">Aviso </h1>
+              <h2 className="tituloRacionesAviso">No se pudo conectar con el Grafico de Ingreso</h2>
+            </div>
             )
           )}
         </div>
@@ -146,7 +147,6 @@ function Grafico() {
             )}
           </div>
         )}
-        <button onClick={descargarExcel}>Descargar Excel</button>
       </div>
     </Layout>
   );
@@ -167,7 +167,7 @@ function tableToDataFrame(table) {
   });
 }
 
-function TamboChart({ tambo }) {
+function TamboChart({ tambo, descargarExcel }) {
   if (!tambo.data) {
     return (
       <div className="tamboChart">
@@ -213,9 +213,12 @@ function TamboChart({ tambo }) {
 
   return (
     <div className="tamboChart">
-      <h2><span className="titulo-grande">{tambo.name} - Animales En Ordeñe</span></h2>
-      <Pie data={chartData} />
+    <div className="chartHeader">
+      <h2 className="tituloNoRegs">{tambo.name} - Animales En Ordeñe</h2>
+      <button onClick={descargarExcel} className="excelRaciones">Excel</button>
     </div>
+    <Pie data={chartData} />
+  </div>
   );
 }
 
