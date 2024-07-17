@@ -12,101 +12,69 @@ import { ContenedorAlertas } from '../ui/Elementos';
 import { useDispatch, useSelector } from "react-redux";
 import { updateValor } from '../../redux/valorSlice';
 
+
 const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedChange, titulo }) => {
-    const { usuario, firebase, guardarTamboSel, tambos, tamboSel, porc, setPorc } = useContext(FirebaseContext);
+    const { usuario, firebase, guardarTamboSel, tambos,tamboSel, porc, setPorc  } = useContext(FirebaseContext);
     const router = useRouter();
     const [show, setShow] = useState(false);
     const [alertas, guardarAlertas] = useState([]);
     const [alertasSinLeer, guardarAlertasSinLeer] = useState([]);
     const [error, guardarError] = useState(false);
     let variante = "warning";
-
+   
+    
     const dispatch = useDispatch();
-    const valor = useSelector((state) => state.valor);
+    const valor = useSelector((state) => state.valor)
 
-    useEffect(() => {
-        // Actualizar el valor cuando "porc" cambie
-        dispatch(updateValor(porc));
-    }, [porc, dispatch]);
+    const handdleChangeValor = (e) => {
 
-    useEffect(() => {
-        // Actualizar "porc" cuando cambie "tamboSel"
-        if (tamboSel) {
+       dispatch(updateValor(e.target.value));
+
+    }
+      
+        useEffect(() => {
+          // Actualizar el valor cuando "porc" cambie
+          dispatch(updateValor(porc));
+        }, [porc, dispatch]);
+      
+        useEffect(() => {
+          // Actualizar "porc" cuando cambie "tamboSel"
+          if (tamboSel) {
             dispatch(updateValor(tamboSel.porcentaje));
-        }
-    }, [tamboSel, dispatch]);
+          }
+        }, [tamboSel, dispatch]);
+        
 
     useEffect(() => {
-        if (valor !== 0 || valor === 0) {
-            agregarNotificacion(valor);
+        tambos && obtenerAlertas();
+    }, [tambos]);
+
+    async function vista(a){
+        const valores={
+            idtambo:a.idtambo,
+            fecha:a.fecha,
+            mensaje:a.mensaje,
+            visto:true
         }
-    }, [valor]);
-
-    const agregarNotificacion = async (nuevoValor) => {
-        let mensajeNotificacion = '';
-        if (nuevoValor === 0) {
-            mensajeNotificacion = 'SE VOLVIO AL VALOR ORIGINAL DE LA RACION';
-        } else if (nuevoValor < 0) {
-            mensajeNotificacion = `SE APLICO UNA REDUCCION EN LA RACION (${Math.abs(nuevoValor)}%)`;
-        } else {
-            mensajeNotificacion = `SE APLICO UN AUMENTO EN LA RACION (${nuevoValor}%)`;
-        }
-
-        const nuevaAlerta = {
-            id: `notificacion-${Date.now()}`, // ID único
-            mensaje: mensajeNotificacion,
-            valorPorcentaje: nuevoValor, // Agregar el valor del porcentaje
-            visto: false,
-            fecha: new Date().toISOString()
-        };
-
-        // Guardar la notificación en el estado local
-        guardarAlertas(prevAlertas => [nuevaAlerta, ...prevAlertas]);
-        guardarAlertasSinLeer(prevSinLeer => [nuevaAlerta, ...prevSinLeer]);
-
-        // Guardar la notificación en Firestore
-        try {
-            await firebase.db.collection('notificaciones').add(nuevaAlerta);
-        } catch (error) {
-            console.error("Error al guardar la notificación en Firestore:", error);
-        }
-    };
-
-    const limpiarNotificaciones = async () => {
-        try {
-            // Eliminar todas las notificaciones de Firestore
-            const batch = firebase.db.batch();
-            const snapshot = await firebase.db.collection('notificaciones').get();
-            snapshot.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-            
-            // Limpiar el estado local
-            guardarAlertas([]);
-            guardarAlertasSinLeer([]);
-        } catch (error) {
-            console.error("Error al limpiar las notificaciones:", error);
-        }
-    };
-
-    async function vista(a) {
-        const valores = {
-            idtambo: a.idtambo,
-            fecha: a.fecha,
-            mensaje: a.mensaje,
-            visto: true
-        };
+         //update en base de datos
         try {
             await firebase.db.collection('alerta').doc(a.id).update(valores);
+      
         } catch (error) {
             console.log(error);
         }
+
     }
 
     const handleClose = () => setShow(false);
     const handleShow = () => {
-        alertasSinLeer.forEach(a => vista(a));
+        alertasSinLeer.forEach(a => {
+            vista(a);
+        })
+
         setShow(true);
         guardarAlertasSinLeer([]);
+
     };
 
     function cerrarSesion() {
@@ -114,46 +82,47 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
         firebase.logout();
         return router.push('/login');
     }
+    async function obtenerAlertas(idtambo) {
 
-    async function obtenerAlertas() {
-        const tambosArray = tambos.map(t => t.id);
+        const tambosArray = tambos.map(t => {
+            return t.id;
+        });
+
         try {
-            // Obtener alertas y notificaciones
-            const [alertasSnapshot, notificacionesSnapshot] = await Promise.all([
-                firebase.db.collection('alerta')
-                    .where('idtambo', 'in', tambosArray)
-                    .orderBy('fecha', 'desc')
-                    .get(),
-                firebase.db.collection('notificaciones')
-                    .orderBy('fecha', 'desc')
-                    .get()
-            ]);
+            await firebase.db.collection('alerta').where('idtambo', 'in', tambosArray).orderBy('fecha', 'desc').get().then(snapshotAlerta);
 
-            const alertasTambos = alertasSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-
-            const notificaciones = notificacionesSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-
-            // Fusionar alertas y notificaciones
-            const todasAlertas = [...alertasTambos, ...notificaciones];
-
-            guardarAlertas(todasAlertas);
-            const alertasSinVer = todasAlertas.filter(a => !a.visto);
-            guardarAlertasSinLeer(alertasSinVer);
-            if (alertasSinVer.length > 0) variante = "danger";
         } catch (error) {
             console.log(error);
             guardarError(true);
+
         }
+
     }
+
+    function snapshotAlerta(snapshot) {
+        const alertasTambos = snapshot.docs.map(doc => {
+            return {
+                id: doc.id,
+                ...doc.data()
+            }
+        })
+        guardarAlertas(alertasTambos);
+        const alertasSinVer = alertasTambos.filter(a => {
+            if (a.visto) return false;
+            return a;
+        });
+        guardarAlertasSinLeer(alertasSinVer);
+        if (alertasSinVer.length > 0) variante = "danger";
+
+    }
+
+    
+
 
     return (
         <header>
+            
+
             <div className="elem-header">
                 <div className="block ">
                     <Switch
@@ -167,31 +136,51 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
                         offColor="#bbbbbb"
                     />
                 </div>
+
                 <div className='hambur' onClick={() => handleToggleSidebar(true)}>
                     <AiOutlineBars size={40} />
                 </div>
                 <div className='responsive'>
-                    <h5>{titulo} {tamboSel && ' - ' + tamboSel.nombre}</h5>
+
+                <h5>{titulo} {tamboSel && ' - '+tamboSel.nombre} </h5>
+
+            </div>
+
+            <div className="elem-header-der">
+                {usuario &&
+                    <>
+                        <Button 
+                            variant="link"
+                            onClick={handleShow}
+                        >
+                            <IoIosNotificationsOutline size={32} />
+                            {alertasSinLeer &&
+
+                                <Badge
+                                    variant={variante}
+                                >
+
+                                    {alertasSinLeer.length}
+                                </Badge>
+                            }
+                        </Button>
+                    &nbsp;
+                    &nbsp;
+                    &nbsp;
+                    
+                    <Button  
+                            variant="outline-info"
+                            onClick={cerrarSesion}
+                        >
+                            <FiLogOut size={24} />
+                        &nbsp;
+                        {usuario.displayName}
+                    </Button>
+                    </>
+                }
                 </div>
-                <div className="elem-header-der">
-                    {usuario && (
-                        <>
-                            <Button variant="link" onClick={handleShow}>
-                                <IoIosNotificationsOutline size={32} />
-                                {alertasSinLeer.length > 0 && (
-                                    <Badge variant={variante}>
-                                        {alertasSinLeer.length}
-                                    </Badge>
-                                )}
-                            </Button>
-                            &nbsp; &nbsp; &nbsp;
-                            <Button variant="outline-info" onClick={cerrarSesion}>
-                                <FiLogOut size={24} />
-                                &nbsp; {usuario.displayName}
-                            </Button>
-                        </>
-                    )}
-                </div>
+
+
             </div>
             <Modal size="lg" show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
@@ -200,28 +189,45 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {alertas.length > 0 ? (
+                    {alertas && (alertas.length > 0) ?
                         <ContenedorAlertas>
-                            {alertas.map(a => (
-                                <DetalleAlerta
-                                    key={a.id}
-                                    alerta={a}
-                                    alertas={alertas}
-                                    guardarAlertas={guardarAlertas}
-                                />
-                            ))}
+                        {alertas.map(a => (
+                            <DetalleAlerta
+                                key={a.id}
+                                alerta={a}
+                                alertas={alertas}
+                                guardarAlertas={guardarAlertas}
+                            />
+                        )
+                        )}
                         </ContenedorAlertas>
-                    ) : (
-                        <Alert variant="warning">No se registran alertas</Alert>
-                    )}
+
+                        :
+                        <Alert variant="warning" >No se registran alertas</Alert>
+                     
+                    }
+
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="danger" onClick={limpiarNotificaciones}>
-                        Restablecer
-                    </Button>
-                </Modal.Footer>
+
             </Modal>
+            <div>
+            {valor !== 0 && valor > 0 ? (
+                  <div className="elem-porc-reduccion" style={{ marginTop: 2, marginBottom: 2}}>
+                  <h2 className='elem-reduc-letras'> SE APLICO UN AUMENTO EN LA RACION</h2>
+                 
+                  </div>
+                ) : null}
+                {valor !== 0 && valor < 0 ? (
+                 <div className="elem-porc-aumento"style={{marginTop: 2, marginBottom: 2}}>
+                 <h2 className='elem-aumen-letras'> SE APLICO UNA DISMINUCION EN LA RACION </h2>
+                
+
+                </div>
+                ) : null}
+            </div>
+            
         </header>
+
     );
 }
 
