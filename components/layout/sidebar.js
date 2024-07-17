@@ -107,7 +107,7 @@ const Aside = ({ collapsed, toggled, handleToggleSidebar }) => {
           
           <Menu iconShape="circle">
           <SubMenu
-            suffix={<span className="badge yellow">2</span>}
+            suffix={<span className="badge yellow">3</span>}
             title='Herramientas'
             icon={<FaTools />}
           >
