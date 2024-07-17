@@ -37,7 +37,6 @@ const Monitor = () => {
 
         obtenerEnlaceMonitor();
     }, [tamboSel, firebase]);
-console.log('animal', animal)
     return (
         <Layout
         titulo="Herramientas"

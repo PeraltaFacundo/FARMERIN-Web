@@ -780,7 +780,59 @@ contact-section, .social-section {
       font-size: 1.5rem; /* Tamaño del texto para dispositivos pequeños */
   }
 }
-/* Fuente y tipografía */
+
+// AVISO DE RACIONES
+.divRaciones {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 20px auto;
+}
+// AVISO GRAFICO 
+.tituloRacionesAviso {
+  margin: 0;
+  color: #721c24;
+  font-family: 'Arial', sans-serif;
+}
+
+.tituloRacionesAviso:first-child {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.tituloRacionesAviso:nth-child(2) {
+  font-size: 18px;
+  font-weight: normal;
+}
+
+.divAnimalesList {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 20px auto;
+  text-align: center;
+}
+// AVISO LISTAS 
+.tituloAnimalesList {
+  margin: 0;
+  color: #721c24;
+  font-family: 'Arial', sans-serif;
+  font-size: 12px;
+}
+
 // TITULOS UBICACION 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
 
@@ -967,4 +1019,46 @@ contact-section, .social-section {
   color: white;
   border-radius: 10px;
   cursor: pointer;
+}
+
+.divNoReg {
+  background-color: #f8d7da; /* Fondo rojo claro */
+  color: #721c24; /* Texto rojo oscuro */
+  border: 1px solid #f5c6cb; /* Borde rojo claro */
+  padding: 20px; /* Espaciado interno */
+  border-radius: 8px; /* Esquinas redondeadas */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra para dar profundidad */
+  max-width: 600px; /* Ancho máximo */
+  margin: 20px auto; /* Centrado horizontal */
+  text-align: center; /* Texto centrado */
+}
+// AVISO DE NO REGS 
+.divNoReg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+.tituloNodispoError {
+  margin: 0;
+  color: #721c24;
+  font-family: 'Arial', sans-serif;
+}
+
+.tituloNodispoError:first-child {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.tituloNodispoError:nth-child(2) {
+  font-size: 18px;
+  font-weight: normal;
 }

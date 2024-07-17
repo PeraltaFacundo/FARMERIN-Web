@@ -2,14 +2,12 @@ import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { Pie } from 'react-chartjs-2';
 import 'chart.js/auto';
-import { saveAs } from 'file-saver';
-import XLSX from 'xlsx';
 import Layout from '../components/layout/layout';
 import { FirebaseContext } from '../firebase2';
 
 function Grafico() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState([]); // Inicializa data como array
+  const [loading, setLoading] = useState(true); // Estado para controlar la carga
   const [animalesAusentes, setAnimalesAusentes] = useState([]);
   const [animalesNuncaPaso, setAnimalesNuncaPaso] = useState([]);
   const [animalesNoLeyo, setAnimalesNoLeyo] = useState([]);
@@ -58,60 +56,48 @@ function Grafico() {
 
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
+      // Filtrar y recopilar animales ausentes
       const ausentes = data.filter(row => parseInt(row.DiasAusente) >= 2);
       setAnimalesAusentes(ausentes);
 
+      // Filtrar y recopilar animales "Nunca Paso"
       const nuncapaso = data.filter(row => parseInt(row.DiasAusente) === -1);
       setAnimalesNuncaPaso(nuncapaso);
 
+      // Filtrar y recopilar animales "No Leyo"
       const noleyo = data.filter(row => parseInt(row.DiasAusente) === 1);
       setAnimalesNoLeyo(noleyo);
     }
   }, [data]);
 
-  function tableToDataFrame(table) {
-    const rows = table.querySelectorAll('tr');
-    const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent.trim());
-
-    return Array.from(rows).slice(1).map(row => {
-      const cells = row.querySelectorAll('td');
-      const obj = {};
-      cells.forEach((cell, i) => {
-        obj[headers[i]] = cell.textContent.trim();
-      });
-      return obj;
-    });
-  }
-
   const descargarExcel = () => {
-    const wb = XLSX.utils.book_new();
+    if (data.length > 0) {
+      const dataExport = data.map(animal => ({
+        RP: animal.RP || 'RP desconocido',
+        eRP: animal.RFID.replace(/⛔/g, '') || 'eRP desconocido', // Elimina caracteres especiales como ⛔
+        DiasAusente: animal.DiasAusente
+      }));
 
-    // Hoja de trabajo para animales ausentes
-    const wsAusentes = XLSX.utils.json_to_sheet(animalesAusentes);
-    XLSX.utils.book_append_sheet(wb, wsAusentes, 'Animales Ausentes');
-
-    // Hoja de trabajo para animales que nunca pasaron
-    const wsNuncaPaso = XLSX.utils.json_to_sheet(animalesNuncaPaso);
-    XLSX.utils.book_append_sheet(wb, wsNuncaPaso, 'Animales que Nunca Pasaron');
-
-    // Hoja de trabajo para animales que no leyó
-    const wsNoLeyo = XLSX.utils.json_to_sheet(animalesNoLeyo);
-    XLSX.utils.book_append_sheet(wb, wsNoLeyo, 'Animales que No Leyó');
-
-    // Generar el archivo Excel y descargarlo
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-
-    const fechaActual = new Date().toISOString().slice(0, 10);
-    const nombreArchivo = `Animales_${fechaActual}.xlsx`;
-
-    saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), nombreArchivo);
+      // Crear archivo de Excel
+      const blob = new Blob([convertToExcel(dataExport)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = 'raciones.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } else {
+      console.error('No hay datos para exportar');
+    }
   };
 
-  const s2ab = s => {
-    const buf = new ArrayBuffer(s.length);
-    const view = new Uint8Array(buf);
-    for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xff;
-    return buf;
+  const convertToExcel = (data) => {
+    const header = Object.keys(data[0]).join('\t') + '\n';
+    const body = data.map(item => Object.values(item).join('\t')).join('\n');
+    return header + body;
   };
 
   return (
@@ -129,7 +115,7 @@ function Grafico() {
             </div>
           ) : (
             data.length > 0 ? (
-              <TamboChart tambo={{ name: tamboSel?.nombre, data }} animalesAusentes={animalesAusentes} animalesNuncaPaso={animalesNuncaPaso} animalesNoLeyo={animalesNoLeyo} descargarExcel={descargarExcel} />
+              <TamboChart tambo={{ name: tamboSel?.nombre, data }} />
             ) : (
               <div className="noDataContainer">
                 <img src='/VacaGrafico.jpg' alt="Imagen de Vaca" />
@@ -160,12 +146,28 @@ function Grafico() {
             )}
           </div>
         )}
+        <button onClick={descargarExcel}>Descargar Excel</button>
       </div>
     </Layout>
   );
 }
 
-function TamboChart({ tambo, animalesAusentes, animalesNuncaPaso, animalesNoLeyo, descargarExcel }) {
+function tableToDataFrame(table) {
+  // Convierte una tabla HTML a un array de objetos
+  const rows = table.querySelectorAll('tr');
+  const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent.trim());
+
+  return Array.from(rows).slice(1).map(row => {
+    const cells = row.querySelectorAll('td');
+    const obj = {};
+    cells.forEach((cell, i) => {
+      obj[headers[i]] = cell.textContent.trim();
+    });
+    return obj;
+  });
+}
+
+function TamboChart({ tambo }) {
   if (!tambo.data) {
     return (
       <div className="tamboChart">
@@ -193,7 +195,7 @@ function TamboChart({ tambo, animalesAusentes, animalesNuncaPaso, animalesNoLeyo
   const nombres = ['NUNCA SE LEYO', 'NO SE LEYO', 'AUSENTE', 'SE LEYO'];
   const colores = ['pink', 'red', 'blue', 'green'];
 
-  const valoresFiltrados = valores.filter(valor => valor !== 0);
+  const valoresFiltrados = valores.filter(val => val !== 0);
   const nombresFiltrados = nombres.filter((_, i) => valores[i] !== 0);
   const coloresFiltrados = colores.filter((_, i) => valores[i] !== 0);
 
@@ -209,26 +211,10 @@ function TamboChart({ tambo, animalesAusentes, animalesNuncaPaso, animalesNoLeyo
     ],
   };
 
-  const chartOptions = {
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          font: {
-            size: 14,
-          },
-        },
-      },
-    },
-  };
-
   return (
     <div className="tamboChart">
       <h2><span className="titulo-grande">{tambo.name} - Animales En Ordeñe</span></h2>
-      <Pie data={chartData} options={chartOptions} />
-      <div className="descargarExcelContainer">
-        <button onClick={descargarExcel}>Descargar Excel</button>
-      </div>
+      <Pie data={chartData} />
     </div>
   );
 }
@@ -245,7 +231,7 @@ function AnimalesAusentesList({ animales }) {
         <thead>
           <tr>
             <th>RP</th>
-            <th>eRP</th>
+            <th>eRP</th> {/* Cambiado de RFID a eRP */}
             <th>Días Ausente</th>
           </tr>
         </thead>
@@ -253,7 +239,7 @@ function AnimalesAusentesList({ animales }) {
           {animales.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID || 'eRP desconocido'}</td>
+              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td> {/* Eliminar caracteres especiales como ⛔ */}
               <td>{animal.DiasAusente}</td>
             </tr>
           ))}
@@ -275,7 +261,7 @@ function AnimalesNuncaPasoList({ animales }) {
         <thead>
           <tr>
             <th>RP</th>
-            <th>eRP</th>
+            <th>eRP</th> {/* Cambiado de RFID a eRP */}
             <th>Días Ausente</th>
           </tr>
         </thead>
@@ -283,7 +269,7 @@ function AnimalesNuncaPasoList({ animales }) {
           {animales.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID || 'eRP desconocido'}</td>
+              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td> {/* Eliminar caracteres especiales como ⛔ */}
               <td>{animal.DiasAusente}</td>
             </tr>
           ))}
@@ -305,7 +291,7 @@ function AnimalesNoLeyoList({ animales }) {
         <thead>
           <tr>
             <th>RP</th>
-            <th>eRP</th>
+            <th>eRP</th> {/* Cambiado de RFID a eRP */}
             <th>Días Ausente</th>
           </tr>
         </thead>
@@ -313,7 +299,7 @@ function AnimalesNoLeyoList({ animales }) {
           {animales.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID || 'eRP desconocido'}</td>
+              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td> {/* Eliminar caracteres especiales como ⛔ */}
               <td>{animal.DiasAusente}</td>
             </tr>
           ))}
