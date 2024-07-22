@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Row, Tab, Tabs, Col, Modal, Button, Table, Alert } from 'react-bootstrap';
+import { Tab, Tabs, Modal, Table, Alert } from 'react-bootstrap';
 import { FirebaseContext } from '../../firebase2';
-import DetalleHistorial from './detalleHistorial';
+import DetalleHistorial from './detalleHistorial'; // Asegúrate de que la ruta sea correcta
 
 const FichaHistorial = ({ show, setShow, tamboSel }) => {
     const handleClose = () => { setShow(false) };
@@ -21,7 +21,7 @@ const FichaHistorial = ({ show, setShow, tamboSel }) => {
             const snapshot = await firebase.db.collection('tambo')
                 .doc(tamboSel.id)
                 .collection('historialParametros')
-                .orderBy('fecha', 'desc') // Asegura que los cambios más recientes aparezcan primero
+                .orderBy('fecha', 'desc')
                 .get();
 
             const historialCambios = snapshot.docs.map(doc => ({
@@ -40,7 +40,7 @@ const FichaHistorial = ({ show, setShow, tamboSel }) => {
             const snapshot = await firebase.db.collection('tambo')
                 .doc(tamboSel.id)
                 .collection('notificaciones')
-                .orderBy('fecha', 'desc') // Asegura que las notificaciones más recientes aparezcan primero
+                .orderBy('fecha', 'desc')
                 .get();
 
             const notificaciones = snapshot.docs.map(doc => ({
@@ -110,6 +110,6 @@ const FichaHistorial = ({ show, setShow, tamboSel }) => {
             </Modal.Body>
         </Modal>
     );
-}
+};
 
 export default FichaHistorial;

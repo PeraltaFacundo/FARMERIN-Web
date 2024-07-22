@@ -61,14 +61,10 @@ const Monitor = () => {
             style={{ width: '100%', height: '1000px', border: '1px solid #fff', borderRadius: '10px' }}
           />
         ) : (
-          <div>
-            <img
-              src="/VacaGrafico.jpg" // Coloca la ruta correcta a la imagen de contenido no disponible
-              alt="Contenido no disponible"
-              style={{ width: '100%', height: 'auto', borderRadius: '10px' }}
-            />
-            <h2 className='TextoFoto'>¡LOS REGISTROS NO ESTAN DISPONIBLES!</h2>
-          </div>
+          <div className="divRaciones">
+          <h1 className="tituloRacionesAviso">Aviso </h1>
+          <h2 className="tituloRacionesAviso">No se pudo conectar con el Monitor de Ingreso</h2>
+        </div>
         )}
       </div>
     </Layout>

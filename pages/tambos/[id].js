@@ -21,7 +21,10 @@ const STATE_INICIAL = {
     tolvas: 10,
     freclimp: 15,
     link: '',
-    host: ''
+    host: '',
+    monitor: '',
+    raciones: '',
+    noreg: '',
 
 }
 
@@ -45,7 +48,7 @@ const Tambo = () => {
     const { usuario, firebase } = useContext(FirebaseContext);
 
     const { valores, errores, handleSubmit, handleChange, handleBlur, guardarValores } = useValidacion(STATE_INICIAL, validarCrearTambo, editTambo);
-    const { idusuario, nombre, ubicacion, bajadas, turnos, tolvas, freclimp, link, host } = valores;
+    const { idusuario, nombre, ubicacion, bajadas, turnos, tolvas, freclimp, link, host, monitor, raciones, noreg } = valores;
 
     //valida que el usuario esté logueado
     useEffect(() => {
@@ -103,7 +106,11 @@ const Tambo = () => {
                 ultlimp: firebase.fechaTimeStamp(format(Date.now(), 'yyyy-MM-dd')),
                 usuarios: [usuario.uid],
                 link,
-                host
+                host,
+                monitor,
+                raciones,
+                noreg,
+            
             }
 
             //insertar en base de datos
@@ -128,8 +135,11 @@ const Tambo = () => {
                 tolvas,
                 freclimp,
                 link,
-                host
-
+                host,
+                monitor,
+                raciones,
+                noreg,
+            
             }
 
             //EDITA en base de datos 
