@@ -143,7 +143,7 @@ function snapshotParametros(snapshot) {
                   <Alert variant="warning" >No hay parámetros nutricionales configurados para {categoria}</Alert>
                </Mensaje>
                :
-               <StickyTable height={185}>
+               <StickyTable height={280}>
                <Table responsive>
                   <thead>
                      <tr>

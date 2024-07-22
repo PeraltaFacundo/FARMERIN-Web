@@ -131,19 +131,19 @@ function Grafico() {
             {animalesAusentes.length > 0 ? (
               <AnimalesAusentesList animales={animalesAusentes} />
             ) : (
-              <div className="mensajeVacio">NO SE ENCONTRARON RESULTADOS PARA ANIMALES AUSENTES.</div>
+              <div className="mensajeVacio"></div>
             )}
             {/* Lista de Animales que No Leyo */}
             {animalesNoLeyo.length > 0 ? (
               <AnimalesNoLeyoList animales={animalesNoLeyo} />
             ) : (
-              <div className="mensajeVacio">NO SE ENCONTRARON RESULTADOS PARA ANIMALES QUE NO SE LEYERON.</div>
+              <div className="mensajeVacio"></div>
             )}
             {/* Lista de Animales que Nunca Pasaron */}
             {animalesNuncaPaso.length > 0 ? (
               <AnimalesNuncaPasoList animales={animalesNuncaPaso} />
             ) : (
-              <div className="mensajeVacio">NO SE ENCONTRARON RESULTADOS PARA ANIMALES QUE NUNCA SE LEYERON.</div>
+              <div className="mensajeVacio"></div>
             )}
           </div>
         )}

@@ -1087,5 +1087,29 @@ contact-section, .social-section {
 }
 
 .excelRaciones:hover {
-  background-color: #0056b3; /* Cambia el color de fondo al pasar sobre el botón */
+  background-color: #208938; /* Cambia el color de fondo al pasar sobre el botón */
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.table th, .table td {
+  vertical-align: middle;
+}
+
+.alert-warning {
+  text-align: center;
+}
+
+button.btn-info {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+button.btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
 }

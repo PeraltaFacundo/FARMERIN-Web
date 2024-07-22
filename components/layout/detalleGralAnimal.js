@@ -90,7 +90,7 @@ const DetalleGralAnimal = ({ animal }) => {
             </td>
          </tr>
          { show &&
-            <FichaAnimal
+            <FichaHIstorial
                animal={animal}
                show={show}
                setShow={setShow}

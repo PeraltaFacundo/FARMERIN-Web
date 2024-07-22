@@ -142,7 +142,7 @@ function NoRegs() {
             {matchedAnimals.length === 0 ? (
               <div className="divRaciones">
               <h1 className="tituloRacionesAviso">Aviso </h1>
-              <h2 className="tituloRacionesAviso">No se pudo conectar con el Grafico de Ingreso</h2>
+              <h2 className="tituloRacionesAviso">No se pudo obtener los animales no registrados</h2>
             </div>
             ) : (
               <Table responsive>
