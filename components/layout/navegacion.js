@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { AiOutlineBars } from 'react-icons/ai';
 import { IoIosNotificationsOutline } from 'react-icons/io';
 import { FiLogOut } from "react-icons/fi";
-import { Button, Badge, Modal, Alert, Form } from 'react-bootstrap';
+import { Button, Badge, Modal, Alert } from 'react-bootstrap';
 import Switch from 'react-switch';
 import { FirebaseContext } from '../../firebase2';
 import DetalleAlerta from './detalleAlerta';
@@ -11,12 +11,14 @@ import { ContenedorAlertas } from '../ui/Elementos';
 import { useDispatch, useSelector } from "react-redux";
 import { updateValor } from '../../redux/valorSlice';
 import FichaHistorial from './fichaHistorial'; // Importar el componente FichaHistorial
+import { format, parseISO } from 'date-fns';
+
 
 const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedChange, titulo }) => {
     const { usuario, firebase, guardarTamboSel, tambos, tamboSel, porc, setPorc } = useContext(FirebaseContext);
     const router = useRouter();
     const [showNotificaciones, setShowNotificaciones] = useState(false);
-    const [showHistorial, setShowHistorial] = useState(false);
+    const [showFichaAnimal, setShowFichaAnimal] = useState(false); // Estado para el modal FichaHistorial
     const [alertas, guardarAlertas] = useState([]);
     const [alertasSinLeer, guardarAlertasSinLeer] = useState([]);
     const [historialCambios, setHistorialCambios] = useState([]);
@@ -48,7 +50,7 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
 
     const agregarNotificacion = async (nuevoValor) => {
         let mensajeNotificacion = '';
-        if (nuevoValor === 0) {
+        if (nuevoValor === 1) {
             mensajeNotificacion = 'SE VOLVIÓ AL VALOR ORIGINAL DE LA RACIÓN';
         } else if (nuevoValor < 0) {
             mensajeNotificacion = `SE APLICÓ UNA REDUCCIÓN EN LA RACIÓN (${Math.abs(nuevoValor)}%)`;
@@ -57,19 +59,16 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
         }
 
         const nuevaAlerta = {
-            id: `notificacion-${Date.now()}`,
             mensaje: mensajeNotificacion,
             valorPorcentaje: nuevoValor,
-            visto: false,
-            fecha: new Date().toISOString()
+            fecha: format(new Date(), 'yyyy-MM-dd')
         };
 
         guardarAlertas(prevAlertas => [nuevaAlerta, ...prevAlertas]);
         guardarAlertasSinLeer(prevSinLeer => [nuevaAlerta, ...prevSinLeer]);
 
         try {
-            await firebase.db.collection('tambo').doc(tamboSel.id).collection('notificaciones').add(nuevaAlerta);
-            await firebase.db.collection('tambo').doc(tamboSel.id).collection('historialParametros').add({
+            await firebase.db.collection('tambo').doc(tamboSel.id).collection('notificaciones').add(nuevaAlerta);({
                 descripcion: mensajeNotificacion,
                 valorPorcentaje: nuevoValor,
                 fecha: nuevaAlerta.fecha
@@ -115,12 +114,13 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
         guardarAlertasSinLeer([]);
     };
 
+    const handleShowFichaAnimal = () => setShowFichaAnimal(true); // Función para mostrar el modal FichaHistorial
+    const handleCloseFichaAnimal = () => setShowFichaAnimal(false); // Función para cerrar el modal FichaHistorial
+
     const handleShowHistorial = () => {
         setShowNotificaciones(false);
-        setShowHistorial(true);
+        setShowFichaAnimal(true);
     };
-
-    const handleCloseHistorial = () => setShowHistorial(false);
 
     const obtenerHistorial = async () => {
         try {
@@ -141,21 +141,21 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
     const filtrarHistorialPorFecha = (fecha) => {
         setFechaSeleccionada(fecha);
         if (fecha) {
-            const fechaInicio = new Date(fecha);
-            fechaInicio.setHours(0, 0, 0, 0);
-
-            const fechaFin = new Date(fecha);
-            fechaFin.setHours(23, 59, 59, 999);
-
+            // Formatear la fecha seleccionada a 'yyyy-MM-dd'
+            const fechaSeleccionadaStr = format(new Date(fecha), 'yyyy-MM-dd');
+    
             const historialFiltrado = historialCambios.filter(cambio => {
-                const fechaCambio = new Date(cambio.fecha);
-                return fechaCambio >= fechaInicio && fechaCambio <= fechaFin;
+                // Formatear la fecha del cambio a 'yyyy-MM-dd'
+                const fechaCambioStr = format(new Date(cambio.fecha), 'yyyy-MM-dd');
+                return fechaCambioStr === fechaSeleccionadaStr;
             });
+    
             setHistorialFiltrado(historialFiltrado);
         } else {
             setHistorialFiltrado(historialCambios); // Si no hay fecha, muestra todos los cambios
         }
     };
+    
 
     async function obtenerAlertas() {
         const tambosArray = tambos.map(t => t.id);
@@ -201,104 +201,78 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
 
     return (
         <header>
-        <div className="elem-header">
-            <div className="block ">
-                <Switch
-                    height={16}
-                    width={30}
-                    checkedIcon={false}
-                    uncheckedIcon={false}
-                    onChange={handleCollapsedChange}
-                    checked={collapsed}
-                    onColor="#219de9"
-                    offColor="#bbbbbb"
-                />
+            <div className="elem-header">
+                <div className="block ">
+                    <Switch
+                        height={16}
+                        width={30}
+                        checkedIcon={false}
+                        uncheckedIcon={false}
+                        onChange={handleCollapsedChange}
+                        checked={collapsed}
+                        onColor="#0985a1"
+                        offColor="#bbbbbb"
+                    />
+                </div>
+                <div className='hambur' onClick={() => handleToggleSidebar(true)}>
+                    <AiOutlineBars size={40} />
+                </div>
+                <div className='responsive'>
+                    <h5>{titulo} {tamboSel && ' - ' + tamboSel.nombre}</h5>
+                </div>
+                <div className="elem-header-der">
+                    {usuario && (
+                        <>
+                            <Button variant="link" onClick={handleShowNotificaciones}>
+                                <IoIosNotificationsOutline size={32} />
+                                {alertasSinLeer.length > 0 && (
+                                    <Badge variant={variante}>
+                                        {alertasSinLeer.length}
+                                    </Badge>
+                                )}
+                            </Button>
+                            &nbsp; &nbsp; &nbsp;
+                            <Button variant="outline-info" onClick={cerrarSesion}>
+                                <FiLogOut size={24} />
+                                &nbsp; {usuario.displayName}
+                            </Button>
+                        </>
+                    )}
+                </div>
             </div>
-            <div className='hambur' onClick={() => handleToggleSidebar(true)}>
-                <AiOutlineBars size={40} />
-            </div>
-            <div className='responsive'>
-                <h5>{titulo} {tamboSel && ' - ' + tamboSel.nombre}</h5>
-            </div>
-            <div className="elem-header-der">
-                {usuario && (
-                    <>
-                        <Button variant="link" onClick={handleShowNotificaciones}>
-                            <IoIosNotificationsOutline size={32} />
-                            {alertasSinLeer.length > 0 && (
-                                <Badge variant={variante}>
-                                    {alertasSinLeer.length}
-                                </Badge>
-                            )}
-                        </Button>
-                        &nbsp; &nbsp; &nbsp;
-                        <Button variant="outline-info" onClick={cerrarSesion}>
-                            <FiLogOut size={24} />
-                            &nbsp; {usuario.displayName}
-                        </Button>
-                    </>
-                )}
-            </div>
-        </div>
-        <Modal size="lg" show={showNotificaciones} onHide={handleCloseNotificaciones}>
-            <Modal.Header closeButton>
-                <Modal.Title>
-                    <p>Alertas</p>
-                </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                {alertas.length > 0 ? (
-                    <ContenedorAlertas>
-                        {alertas.map(a => (
-                            <DetalleAlerta
-                                key={a.id}
-                                alerta={a}
-                                alertas={alertas}
-                                guardarAlertas={guardarAlertas}
-                            />
-                        ))}
-                    </ContenedorAlertas>
-                ) : (
-                    <Alert variant="warning">No se registran alertas</Alert>
-                )}
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant="primary" onClick={handleShowHistorial}>
-                    Ver Historial de Cambios
-                </Button>
-            </Modal.Footer>
-        </Modal>
-
-        <Modal size="lg" show={showHistorial} onHide={handleCloseHistorial}>
-            <Modal.Header closeButton>
-                <Modal.Title>Historial de Cambios</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <FichaHistorial
-                    show={showHistorial}
-                    setShow={setShowHistorial}
-                    tamboSel={tamboSel}
-                />
-                {historialFiltrado.length > 0 ? (
-                    <ul>
-                        {historialFiltrado.map(cambio => (
-                            <li key={cambio.id}>
-                                {new Date(cambio.fecha).toLocaleString('es-AR')}: {cambio.descripcion}
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <Alert variant="warning">No se registra historial de cambios para la fecha seleccionada</Alert>
-                )}
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={handleCloseHistorial}>
-                    Cerrar
-                </Button>
-            </Modal.Footer>
-        </Modal>
-    </header>
+            <Modal size="lg" show={showNotificaciones} onHide={handleCloseNotificaciones}>
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <p>Alertas</p>
+                    </Modal.Title>
+                    <Button variant="outline-primary" onClick={handleShowHistorial} style={{ marginLeft: 'auto' }}>
+                        Mostrar historial de cambios
+                    </Button>
+                </Modal.Header>
+                <Modal.Body>
+                    {alertas.length > 0 ? (
+                        <ContenedorAlertas>
+                            {alertas.map(a => (
+                                <DetalleAlerta
+                                    key={a.id}
+                                    alerta={a}
+                                    alertas={alertas}
+                                    guardarAlertas={guardarAlertas}
+                                />
+                            ))}
+                        </ContenedorAlertas>
+                    ) : (
+                        <Alert variant="warning">No se registran alertas</Alert>
+                    )}
+                </Modal.Body>
+            </Modal>
+            <FichaHistorial 
+                show={showFichaAnimal} 
+                setShow={setShowFichaAnimal} 
+                tamboSel={tamboSel}
+            />
+        </header>
     );
-}
+};
 
 export default Navegacion;
