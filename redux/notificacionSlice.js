@@ -1,25 +1,23 @@
-import { createSlice } from "@reduxjs/toolkit";
+// src/slices/notificationsSlice.js
+import { createSlice } from '@reduxjs/toolkit';
 
-const initialState = {
-  mostrarCartel: false,
-  tipoAccion: '',
-};
+const initialState = [];
 
-const notificacionSlice = createSlice({
-  name: 'notificacion',
+const notificationsSlice = createSlice({
+  name: 'notifications',
   initialState,
   reducers: {
-    mostrarCartel: (state, action) => {
-      state.mostrarCartel = true;
-      state.tipoAccion = action.payload.tipoAccion;
+    addNotification: (state, action) => {
+      state.push(action.payload);
     },
-    ocultarCartel: (state) => {
-      state.mostrarCartel = false;
-      state.tipoAccion = '';
+    removeNotification: (state, action) => {
+      return state.filter(notification => notification.id !== action.payload);
     },
-  },
+    clearNotifications: () => {
+      return [];
+    }
+  }
 });
 
-export const { mostrarCartel, ocultarCartel } = notificacionSlice.actions;
-
-export default notificacionSlice.reducer;
+export const { addNotification, removeNotification, clearNotifications } = notificationsSlice.actions;
+export default notificationsSlice.reducer;

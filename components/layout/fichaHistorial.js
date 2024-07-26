@@ -4,7 +4,14 @@ import moment from 'moment';
 import { FirebaseContext } from '../../firebase2';
 
 const FichaHistorial = ({ show, setShow, tamboSel }) => {
-    const handleClose = () => { setShow(false) };
+    const handleClose = () => {
+        if (typeof setShow === 'function') {
+            setShow(false);
+        } else {
+            console.error("setShow is not a function");
+        }
+    };
+
     const [notificaciones, setNotificaciones] = useState([]);
     const { firebase } = useContext(FirebaseContext);
 
@@ -22,12 +29,16 @@ const FichaHistorial = ({ show, setShow, tamboSel }) => {
                 .orderBy('fecha', 'desc')
                 .get();
 
-            const notificaciones = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-
-            setNotificaciones(notificaciones);
+            if (snapshot.empty) {
+                console.log("No hay notificaciones en la colección.");
+            } else {
+                const notificaciones = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log("Notificaciones obtenidas:", notificaciones); // Depuración
+                setNotificaciones(notificaciones);
+            }
         } catch (error) {
             console.error("Error al obtener las notificaciones:", error);
         }

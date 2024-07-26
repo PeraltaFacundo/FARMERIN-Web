@@ -3,28 +3,24 @@ import { useRouter } from 'next/router';
 import { AiOutlineBars } from 'react-icons/ai';
 import { IoIosNotificationsOutline } from 'react-icons/io';
 import { FiLogOut } from "react-icons/fi";
-import { Button, Badge, Modal, Alert } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import Switch from 'react-switch';
 import { FirebaseContext } from '../../firebase2';
-import DetalleAlerta from './detalleAlerta';
+import { Badge, Modal, Alert } from 'react-bootstrap';
 import { ContenedorAlertas } from '../ui/Elementos';
 import { useDispatch, useSelector } from "react-redux";
 import { updateValor } from '../../redux/valorSlice';
-import FichaHistorial from './fichaHistorial'; // Importar el componente FichaHistorial
-import { format, parseISO } from 'date-fns';
-
 
 const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedChange, titulo }) => {
-    const { usuario, firebase, guardarTamboSel, tambos, tamboSel, porc, setPorc } = useContext(FirebaseContext);
+    const { usuario, firebase, guardarTamboSel, tambos, tamboSel, porc } = useContext(FirebaseContext);
     const router = useRouter();
-    const [showNotificaciones, setShowNotificaciones] = useState(false);
-    const [showFichaAnimal, setShowFichaAnimal] = useState(false); // Estado para el modal FichaHistorial
+    const [show, setShow] = useState(false);
+    const [showHistorial, setShowHistorial] = useState(false);
     const [alertas, guardarAlertas] = useState([]);
+    const [historial, guardarHistorial] = useState([]);
     const [alertasSinLeer, guardarAlertasSinLeer] = useState([]);
-    const [historialCambios, setHistorialCambios] = useState([]);
-    const [historialFiltrado, setHistorialFiltrado] = useState([]);
     const [error, guardarError] = useState(false);
-    const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
+    const [ultimoCambio, setUltimoCambio] = useState(null); // Estado para el último cambio
     let variante = "warning";
 
     const dispatch = useDispatch();
@@ -41,57 +37,15 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
     }, [tamboSel, dispatch]);
 
     useEffect(() => {
-        agregarNotificacion(valor);
-    }, [valor]);
+        tambos && obtenerAlertas();
+    }, [tambos]);
 
     useEffect(() => {
-        obtenerHistorial();
-    }, []);
-
-    const agregarNotificacion = async (nuevoValor) => {
-        let mensajeNotificacion = '';
-        if (nuevoValor === 1) {
-            mensajeNotificacion = 'SE VOLVIÓ AL VALOR ORIGINAL DE LA RACIÓN';
-        } else if (nuevoValor < 0) {
-            mensajeNotificacion = `SE APLICÓ UNA REDUCCIÓN EN LA RACIÓN (${Math.abs(nuevoValor)}%)`;
-        } else {
-            mensajeNotificacion = `SE APLICÓ UN AUMENTO EN LA RACIÓN (${nuevoValor}%)`;
+        if (tamboSel) {
+            obtenerUltimoCambio(); // Obtener el último cambio cada vez que tamboSel cambie
+            obtenerHistorial(); // Obtener el historial cuando tamboSel cambie
         }
-
-        const nuevaAlerta = {
-            mensaje: mensajeNotificacion,
-            valorPorcentaje: nuevoValor,
-            fecha: format(new Date(), 'yyyy-MM-dd')
-        };
-
-        guardarAlertas(prevAlertas => [nuevaAlerta, ...prevAlertas]);
-        guardarAlertasSinLeer(prevSinLeer => [nuevaAlerta, ...prevSinLeer]);
-
-        try {
-            await firebase.db.collection('tambo').doc(tamboSel.id).collection('notificaciones').add(nuevaAlerta);({
-                descripcion: mensajeNotificacion,
-                valorPorcentaje: nuevoValor,
-                fecha: nuevaAlerta.fecha
-            });
-        } catch (error) {
-            console.error("Error al guardar la notificación en Firestore:", error);
-        }
-    };
-
-    const limpiarNotificaciones = async () => {
-        try {
-            const batch = firebase.db.batch();
-            const snapshot = await firebase.db.collection('tambo')
-            .doc(tamboSel.id).collection('notificaciones').get();
-            snapshot.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-
-            guardarAlertas([]);
-            guardarAlertasSinLeer([]);
-        } catch (error) {
-            console.error("Error al limpiar las notificaciones:", error);
-        }
-    };
+    }, [tamboSel]);
 
     async function vista(a) {
         const valores = {
@@ -107,91 +61,19 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
         }
     }
 
-    const handleCloseNotificaciones = () => setShowNotificaciones(false);
-    const handleShowNotificaciones = () => {
-        alertasSinLeer.forEach(a => vista(a));
-        setShowNotificaciones(true);
+    const handleClose = () => setShow(false);
+    const handleShow = () => {
+        alertasSinLeer.forEach(a => {
+            vista(a);
+        });
+        setShow(true);
         guardarAlertasSinLeer([]);
     };
 
-    const handleShowFichaAnimal = () => setShowFichaAnimal(true); // Función para mostrar el modal FichaHistorial
-    const handleCloseFichaAnimal = () => setShowFichaAnimal(false); // Función para cerrar el modal FichaHistorial
-
-    const handleShowHistorial = () => {
-        setShowNotificaciones(false);
-        setShowFichaAnimal(true);
+    const handleHistorialClose = () => setShowHistorial(false);
+    const handleHistorialShow = () => {
+        setShowHistorial(true);
     };
-
-    const obtenerHistorial = async () => {
-        try {
-            const snapshot = await firebase.db.collection('tambo')
-            .doc(tamboSel.id)
-            .collection('historialParametros').orderBy('fecha', 'desc').get();
-            const historial = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setHistorialCambios(historial);
-            setHistorialFiltrado(historial); // Inicialmente, muestra todos los cambios
-        } catch (error) {
-            console.error("Error al obtener el historial de cambios:", error);
-        }
-    };
-
-    const filtrarHistorialPorFecha = (fecha) => {
-        setFechaSeleccionada(fecha);
-        if (fecha) {
-            // Formatear la fecha seleccionada a 'yyyy-MM-dd'
-            const fechaSeleccionadaStr = format(new Date(fecha), 'yyyy-MM-dd');
-    
-            const historialFiltrado = historialCambios.filter(cambio => {
-                // Formatear la fecha del cambio a 'yyyy-MM-dd'
-                const fechaCambioStr = format(new Date(cambio.fecha), 'yyyy-MM-dd');
-                return fechaCambioStr === fechaSeleccionadaStr;
-            });
-    
-            setHistorialFiltrado(historialFiltrado);
-        } else {
-            setHistorialFiltrado(historialCambios); // Si no hay fecha, muestra todos los cambios
-        }
-    };
-    
-
-    async function obtenerAlertas() {
-        const tambosArray = tambos.map(t => t.id);
-        try {
-            const [alertasSnapshot, notificacionesSnapshot] = await Promise.all([
-                firebase.db.collection('alerta')
-                    .where('idtambo', 'in', tambosArray)
-                    .orderBy('fecha', 'desc')
-                    .get(),
-                firebase.db.collection('tambo')
-                .doc(tamboSel.id).collection('notificaciones')
-                    .orderBy('fecha', 'desc')
-                    .get()
-            ]);
-
-            const alertasTambos = alertasSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-
-            const notificaciones = notificacionesSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-
-            const todasAlertas = [...alertasTambos, ...notificaciones];
-
-            guardarAlertas(todasAlertas);
-            const alertasSinVer = todasAlertas.filter(a => !a.visto);
-            guardarAlertasSinLeer(alertasSinVer);
-            if (alertasSinVer.length > 0) variante = "danger";
-        } catch (error) {
-            console.log(error);
-            guardarError(true);
-        }
-    }
 
     function cerrarSesion() {
         guardarTamboSel(null);
@@ -199,10 +81,96 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
         return router.push('/login');
     }
 
+    async function obtenerAlertas(idtambo) {
+        const tambosArray = tambos.map(t => t.id);
+        try {
+            await firebase.db.collection('alerta').where('idtambo', 'in', tambosArray).orderBy('fecha', 'desc').get().then(snapshotAlerta);
+        } catch (error) {
+            console.log(error);
+            guardarError(true);
+        }
+    }
+
+    function snapshotAlerta(snapshot) {
+        const alertasTambos = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        guardarAlertas(alertasTambos);
+        const alertasSinVer = alertasTambos.filter(a => !a.visto);
+        guardarAlertasSinLeer(alertasSinVer);
+        if (alertasSinVer.length > 0) variante = "danger";
+    }
+
+    async function obtenerHistorial() {
+        if (!tamboSel) return;
+        try {
+            const snapshot = await firebase.db.collection('tambo')
+                .doc(tamboSel.id)
+                .collection('notificaciones')
+                .orderBy('fecha', 'desc') // Ordenar por fecha en orden descendente
+                .get();
+
+            const historialData = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            guardarHistorial(historialData);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async function obtenerUltimoCambio() {
+        if (!tamboSel) return;
+        try {
+            const snapshot = await firebase.db.collection('tambo')
+                .doc(tamboSel.id)
+                .collection('notificaciones')
+                .orderBy('fecha', 'desc')
+                .limit(1)
+                .get();
+            const ultimoCambioDoc = snapshot.docs[0];
+            if (ultimoCambioDoc) {
+                const ultimoCambioData = {
+                    id: ultimoCambioDoc.id,
+                    ...ultimoCambioDoc.data()
+                };
+                setUltimoCambio(ultimoCambioData);
+                guardarAlertasSinLeer([ultimoCambioData]); // Mostrar solo el último cambio en el modal de alertas
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    // Asegúrate de actualizar el estado de último cambio después de realizar un nuevo cambio
+    const handleCambio = async (nuevoValor) => {
+        // Suponiendo que tienes una función para guardar el cambio en la base de datos
+        await actualizarRacion(nuevoValor); 
+        await obtenerUltimoCambio(); // Actualizar el último cambio después de guardar
+    };
+
+    function formatFecha(fecha) {
+        if (fecha instanceof Date) {
+            return fecha.toLocaleString();
+        } else if (fecha && fecha.toDate) {
+            // Caso para Firestore Timestamp
+            return fecha.toDate().toLocaleString();
+        } else if (typeof fecha === 'string') {
+            // Caso para fecha en formato de cadena
+            return new Date(fecha).toLocaleString();
+        } else {
+            // Caso por defecto si no es un formato esperado
+            return 'Fecha desconocida';
+        }
+    }
+
     return (
         <header>
             <div className="elem-header">
-                <div className="block ">
+                <div className="block">
                     <Switch
                         height={16}
                         width={30}
@@ -210,69 +178,98 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
                         uncheckedIcon={false}
                         onChange={handleCollapsedChange}
                         checked={collapsed}
-                        onColor="#0985a1"
+                        onColor="#219de9"
                         offColor="#bbbbbb"
                     />
                 </div>
+
                 <div className='hambur' onClick={() => handleToggleSidebar(true)}>
                     <AiOutlineBars size={40} />
                 </div>
                 <div className='responsive'>
-                    <h5>{titulo} {tamboSel && ' - ' + tamboSel.nombre}</h5>
+                    <h5>{titulo} {tamboSel && ' - ' + tamboSel.nombre} </h5>
                 </div>
+
                 <div className="elem-header-der">
-                    {usuario && (
+                    {usuario &&
                         <>
-                            <Button variant="link" onClick={handleShowNotificaciones}>
+                            <Button
+                                variant="link"
+                                onClick={handleShow}
+                            >
                                 <IoIosNotificationsOutline size={32} />
-                                {alertasSinLeer.length > 0 && (
-                                    <Badge variant={variante}>
+                                {alertasSinLeer &&
+                                    <Badge
+                                        variant={variante}
+                                    >
                                         {alertasSinLeer.length}
                                     </Badge>
-                                )}
+                                }
                             </Button>
-                            &nbsp; &nbsp; &nbsp;
-                            <Button variant="outline-info" onClick={cerrarSesion}>
+                            &nbsp;
+                            &nbsp;
+                            &nbsp;
+                            <Button
+                                variant="outline-info"
+                                onClick={cerrarSesion}
+                            >
                                 <FiLogOut size={24} />
-                                &nbsp; {usuario.displayName}
+                                &nbsp;
+                                {usuario.displayName}
                             </Button>
                         </>
-                    )}
+                    }
                 </div>
             </div>
-            <Modal size="lg" show={showNotificaciones} onHide={handleCloseNotificaciones}>
+
+            <Modal size="lg" show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
                     <Modal.Title>
                         <p>Alertas</p>
                     </Modal.Title>
-                    <Button variant="outline-primary" onClick={handleShowHistorial} style={{ marginLeft: 'auto' }}>
-                        Mostrar historial de cambios
-                    </Button>
                 </Modal.Header>
                 <Modal.Body>
-                    {alertas.length > 0 ? (
+                    {ultimoCambio ? (
                         <ContenedorAlertas>
-                            {alertas.map(a => (
-                                <DetalleAlerta
-                                    key={a.id}
-                                    alerta={a}
-                                    alertas={alertas}
-                                    guardarAlertas={guardarAlertas}
-                                />
-                            ))}
+                            <div key={ultimoCambio.id}>
+                                <strong>{formatFecha(ultimoCambio.fecha)}:</strong> {ultimoCambio.mensaje}
+                            </div>
                         </ContenedorAlertas>
                     ) : (
                         <Alert variant="warning">No se registran alertas</Alert>
                     )}
+                    <Button
+                        variant="info"
+                        onClick={handleHistorialShow}
+                        style={{ marginTop: '10px' }}
+                    >
+                        Ver historial de cambios
+                    </Button>
                 </Modal.Body>
             </Modal>
-            <FichaHistorial 
-                show={showFichaAnimal} 
-                setShow={setShowFichaAnimal} 
-                tamboSel={tamboSel}
-            />
+
+            <Modal size="lg" show={showHistorial} onHide={handleHistorialClose}>
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <p>Historial de Cambios</p>
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {historial.length > 0 ? (
+                        <ContenedorAlertas>
+                            {historial.map(cambio => (
+                                <div key={cambio.id}>
+                                    <strong>{formatFecha(cambio.fecha)}:</strong> {cambio.mensaje}
+                                </div>
+                            ))}
+                        </ContenedorAlertas>
+                    ) : (
+                        <Alert variant="warning">No se registran cambios</Alert>
+                    )}
+                </Modal.Body>
+            </Modal>
         </header>
     );
-};
+}
 
 export default Navegacion;

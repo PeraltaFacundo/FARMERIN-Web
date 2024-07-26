@@ -153,7 +153,13 @@ const Aside = ({ collapsed, toggled, handleToggleSidebar }) => {
           </Link>
 
         </Menu>
+        <Menu>
+        <Link href="/MOTIVODEBAJA">
+            <MenuItem icon={<FaHandsHelping size={15} />}>
+              ANIMALES QUE ESTAN EN BAJA </MenuItem>
+          </Link>
 
+        </Menu>
       </SidebarContent>
 
       <SidebarFooter style={{ textAlign: 'center' }}>
