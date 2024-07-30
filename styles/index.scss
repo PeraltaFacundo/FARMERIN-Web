@@ -1224,3 +1224,44 @@ button.btn-info:hover {
   justify-content: center;
   color: white;
 }
+
+.boton-historial {
+  background-color: #1b8aa5;
+  color: white; // Asegúrate de que el texto sea legible
+  border: none; // Opcional: quitar el borde si no se ajusta al diseño
+  &:hover {
+      background-color: darken(#1b8aa5, 10%); // Oscurecer el color al pasar el ratón por encima
+  }
+}
+
+.historial-container {
+  max-height: 400px; // Limita la altura máxima del contenedor y permite desplazamiento si es necesario
+  overflow-y: auto; // Agrega desplazamiento vertical
+  padding: 15px;
+
+  .historial-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #e0e0e0; // Línea de separación entre elementos
+      background-color: #f9f9f9; // Fondo de los elementos del historial
+      margin-bottom: 10px;
+      border-radius: 5px; // Bordes redondeados
+
+      &:last-child {
+          border-bottom: none; // Sin borde inferior en el último elemento
+      }
+
+      .historial-fecha {
+          font-weight: bold;
+          color: #333; // Color de la fecha
+      }
+
+      .historial-mensaje {
+          color: #666; // Color del mensaje
+      }
+  }
+}
+
+

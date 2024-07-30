@@ -27,14 +27,17 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
     const valor = useSelector((state) => state.valor);
 
     useEffect(() => {
-        dispatch(updateValor(porc));
+        if (porc !== undefined) {
+            dispatch(updateValor(porc));
+        }
     }, [porc, dispatch]);
-
+    
     useEffect(() => {
-        if (tamboSel) {
+        if (tamboSel && tamboSel.porcentaje !== undefined) {
             dispatch(updateValor(tamboSel.porcentaje));
         }
     }, [tamboSel, dispatch]);
+    
 
     useEffect(() => {
         tambos && obtenerAlertas();
@@ -154,13 +157,13 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
 
     function formatFecha(fecha) {
         if (fecha instanceof Date) {
-            return fecha.toLocaleString();
+            return fecha.toLocaleDateString(); // Solo fecha sin hora
         } else if (fecha && fecha.toDate) {
             // Caso para Firestore Timestamp
-            return fecha.toDate().toLocaleString();
+            return fecha.toDate().toLocaleDateString(); // Solo fecha sin hora
         } else if (typeof fecha === 'string') {
             // Caso para fecha en formato de cadena
-            return new Date(fecha).toLocaleString();
+            return new Date(fecha).toLocaleDateString(); // Solo fecha sin hora
         } else {
             // Caso por defecto si no es un formato esperado
             return 'Fecha desconocida';
@@ -229,19 +232,23 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
+               
                     {ultimoCambio ? (
+                         <div className="historial-container">
                         <ContenedorAlertas>
-                            <div key={ultimoCambio.id}>
-                                <strong>{formatFecha(ultimoCambio.fecha)}:</strong> {ultimoCambio.mensaje}
+                            <div className="historial-item" key={ultimoCambio.id}>
+                            <div className="historial-fecha">{formatFecha(ultimoCambio.fecha)}:</div> {ultimoCambio.mensaje}
                             </div>
                         </ContenedorAlertas>
+                        </div>
                     ) : (
                         <Alert variant="warning">No se registran alertas</Alert>
                     )}
                     <Button
                         variant="info"
                         onClick={handleHistorialShow}
-                        style={{ marginTop: '10px' }}
+                        style={{ marginTop: '10px', backgroundColor: '#1b8aa5' }} // Cambiado a color #1b8aa5
+                        className="boton-historial"
                     >
                         Ver historial de cambios
                     </Button>
@@ -251,25 +258,29 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
             <Modal size="lg" show={showHistorial} onHide={handleHistorialClose}>
                 <Modal.Header closeButton>
                     <Modal.Title>
-                        <p>Historial de Cambios</p>
+                        Historial de cambios
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {historial.length > 0 ? (
-                        <ContenedorAlertas>
-                            {historial.map(cambio => (
-                                <div key={cambio.id}>
-                                    <strong>{formatFecha(cambio.fecha)}:</strong> {cambio.mensaje}
-                                </div>
-                            ))}
-                        </ContenedorAlertas>
-                    ) : (
-                        <Alert variant="warning">No se registran cambios</Alert>
-                    )}
+                    <div className="historial-container">
+                        {historial.length > 0 ? historial.map((cambio) => (
+                            <div key={cambio.id} className="historial-item">
+                                <div className="historial-fecha">{formatFecha(cambio.fecha)}</div>
+                                <div className="historial-mensaje">{cambio.mensaje}</div>
+                            </div>
+                        )) : (
+                            <Alert variant="info">No hay cambios registrados.</Alert>
+                        )}
+                    </div>
                 </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleHistorialClose}>
+                        Cerrar
+                    </Button>
+                </Modal.Footer>
             </Modal>
         </header>
     );
-}
+};
 
 export default Navegacion;

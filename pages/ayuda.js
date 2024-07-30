@@ -11,11 +11,11 @@ const Ayuda = () => {
           <div className="contact-item">
             <a className="contact-item"> 
               <FaPhone />
-              <span>2227-673372</span>
+              <span>2227-623372</span>
             </a>
           </div>
           <div className="contact-item">
-            <a href="http://api.whatsapp.com/send?phone=5492227673372">
+            <a href="http://api.whatsapp.com/send?phone=5492227623372">
               <FaWhatsapp />
               <span>WhatsApp</span>
             </a>

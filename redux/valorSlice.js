@@ -1,15 +1,18 @@
-import { createSlice } from "@reduxjs/toolkit";
+// valorSlice.js
+import { createSlice } from '@reduxjs/toolkit';
 
-const valorSlice = createSlice({
-  name: "valor",
-  initialState: 0,
+export const valorSlice = createSlice({
+  name: 'valor',
+  initialState: 0, // O el valor inicial que desees
   reducers: {
     updateValor: (state, action) => {
-      return action.payload;
+      if (action.payload !== undefined) {
+        return action.payload;
+      }
+      return state; // Devuelve el estado actual si no hay cambios
     },
   },
 });
 
 export const { updateValor } = valorSlice.actions;
-
 export default valorSlice.reducer;

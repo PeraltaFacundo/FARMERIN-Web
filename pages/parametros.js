@@ -198,7 +198,7 @@ const Parametros = () => {
       </div>
       {selectedChange !== null && (
         <Button
-          style={{ fontWeight: "bold", borderRadius: "10px", width: "20%", height: "50px", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center" }}
+          style={{ fontWeight: "bold", borderRadius: "10px", width: "20%", height: "50px", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center"}}
           variant="primary"
           block
           className='botonAplicar'
