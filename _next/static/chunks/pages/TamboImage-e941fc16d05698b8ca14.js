@@ -1,0 +1,1 @@
+_N_E=(window.webpackJsonp_N_E=window.webpackJsonp_N_E||[]).push([[36],{Nmt4:function(n,o,_){(window.__NEXT_P=window.__NEXT_P||[]).push(["/TamboImage",function(){return _("SLoT")}])},SLoT:function(n,o){}},[["Nmt4",0]]]);
