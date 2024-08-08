@@ -84,14 +84,21 @@ function Grafico() {
         eRP: animal.RFID.replace(/⛔/g, '') || 'eRP desconocido', // Elimina caracteres especiales como ⛔
         DiasAusente: animal.DiasAusente
       }));
-
+  
+      // Obtener la fecha actual
+      const now = new Date();
+      const formattedDate = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+  
       // Crear archivo de Excel
-      const blob = new Blob([convertToExcel(dataExport)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const blob = new Blob([convertToExcel(dataExport)], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = 'raciones.xlsx';
+      
+      // Cambiar el nombre del archivo para incluir la fecha
+      a.download = `ListadoDeIngreso_${formattedDate}.xlsx`;
+      
       document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
@@ -100,9 +107,10 @@ function Grafico() {
       console.error('No hay datos para exportar');
     }
   };
+  
 
   return (
-    <Layout titulo="Herramientas">
+    <Layout titulo="Grafico de ingreso">
       <div className="containerGrafico">
         <div className="chartContainer">
           {loading ? (

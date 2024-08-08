@@ -6,6 +6,7 @@ import Layout from '../components/layout/layout';
 import DetalleParametro from '../components/layout/detalleParametro';
 import SelectTambo from '../components/layout/selectTambo';
 import { Button, DropdownButton, Dropdown } from 'react-bootstrap';
+import { format } from 'date-fns';
 import { addNotification } from '../redux/notificacionSlice';
 
 const Parametros = () => {
@@ -49,42 +50,38 @@ const Parametros = () => {
     setPorc(nuevoPorcentaje);
 
     try {
-        // Actualizar porcentaje en la colección 'tambo'
-        await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
+      await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
 
-        // Obtener la colección de animales y filtrar documentos
-        const animalesSnapshot = await firebase.db.collection('animal')
-            .where('tamboId', '==', tamboSel.id)
-            .get();
+      // Obtener la colección de animales
+      const animalesSnapshot = await firebase.db.collection('animal').where('tamboId', '==', tamboSel.id).get();
 
-        animalesSnapshot.forEach(async (doc) => {
-            const docData = doc.data();
-            if (docData.fbaja === '' && docData.mbaja === '') {
-                const docRef = firebase.db.collection('animal').doc(doc.id);
-                await docRef.update(pAnimal);
-            }
-        });
+      animalesSnapshot.forEach(async (doc) => {
+        const animalData = doc.data();
+        if (!animalData.fbaja && !animalData.mbaja) {
+          await firebase.db.collection('animal').doc(doc.id).update(pAnimal);
+        }
+      });
 
-        // Agregar notificación en Firestore
-        await firebase.db.collection('tambo').doc(tamboSel.id).collection('notificaciones').add({
-            mensaje: isIncrease ? `AUMENTO DEL ${selectedChange}%` : `REDUCCIÓN DEL ${selectedChange}%`,
-            fecha: firebase.nowTimeStamp(),
-        });
+      // Agregar notificación en Firestore
+      await firebase.db.collection('tambo').doc(tamboSel.id).collection('notificaciones').add({
+        mensaje: isIncrease ? `AUMENTO DEL ${selectedChange} %` : `REDUCCIÓN DEL ${selectedChange} %`,
+        fecha: firebase.nowTimeStamp(),
+      });
 
-        // Agregar notificación en Redux
-        dispatch(addNotification({
-            id: Date.now(),
-            mensaje: isIncrease ? `AUMENTO DEL ${selectedChange}%` : `REDUCCIÓN DEL ${selectedChange}%`,
-            fecha: firebase.nowTimeStamp(),
-        }));
+      // Agregar notificación en Redux
+      dispatch(addNotification({
+        id: Date.now(),
+        mensaje: isIncrease ? `AUMENTO DEL ${selectedChange} %` : `REDUCCIÓN DEL ${selectedChange} %`,
+        fecha: firebase.nowTimeStamp(),
+      }));
 
-        console.log(tamboSel);
+      console.log(tamboSel);
     } catch (error) {
-        console.log(error);
+      console.log(error);
     }
     setValor(nuevoPorcentaje);
     setSelectedChange(null);
-};
+  };
 
   const restablecer = async () => {
     if (tamboSel) {
@@ -96,16 +93,14 @@ const Parametros = () => {
         // Actualizar el porcentaje en la colección 'tambo'
         await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
 
-        // Obtener la colección de animales y filtrar documentos
-        const animalesSnapshot = await firebase.db.collection('animal')
-          .where('tamboId', '==', tamboSel.id)
-          .where('fbaja', '==', '')  // Filtra animales sin fbaja
-          .where('mbaja', '==', '')  // Filtra animales sin mbaja
-          .get();
+        // Obtener la colección de animales
+        const animalesSnapshot = await firebase.db.collection('animal').where('tamboId', '==', tamboSel.id).get();
 
         animalesSnapshot.forEach(async (doc) => {
-          const docRef = firebase.db.collection('animal').doc(doc.id);
-          await docRef.update(pAnimal);
+          const animalData = doc.data();
+          if (!animalData.fbaja && !animalData.mbaja) {
+            await firebase.db.collection('animal').doc(doc.id).update(pAnimal);
+          }
         });
 
         // Agregar notificación en Firestore
@@ -164,7 +159,7 @@ const Parametros = () => {
         <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
           <DropdownButton
             id="dropdown-reducir-button"
-            title={isIncrease === false && selectedChange !== null ? `Reducción: ${selectedChange}%` : 'Seleccionar Reducción'}
+            title={isIncrease === false && selectedChange !== null ? `Reducción : ${selectedChange}%` : 'Seleccionar Reducción'}
             variant="danger"
             className='dropdown-reducir-button'
             onSelect={(e) => { setSelectedChange(parseInt(e)); setIsIncrease(false); }}
@@ -184,7 +179,7 @@ const Parametros = () => {
           >Restablecer</Button>
           <DropdownButton
             id="dropdown-aumentar-button"
-            title={isIncrease === true && selectedChange !== null ? `Aumento: ${selectedChange}%` : 'Seleccionar Aumento'}
+            title={isIncrease === true && selectedChange !== null ? `Aumento : ${selectedChange}%` : 'Seleccionar Aumento'}
             variant="success"
             className='dropdown-aumentar-button'
             onSelect={(e) => { setSelectedChange(parseInt(e)); setIsIncrease(true); }}
@@ -201,33 +196,37 @@ const Parametros = () => {
             <Dropdown.Item eventKey="100">100%</Dropdown.Item>
           </DropdownButton>
         </div>
-        {selectedChange !== null && (
-          <Button
-            style={{ fontWeight: "bold", borderRadius: "10px", width: "20%", height: "50px", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center"}}
-            variant="primary"
-            block
-            className='botonAplicar'
-            onClick={handleApplyChange}
-          >Aplicar</Button>
-        )}
-      </div>
-      {tamboSel ?
-        <>
-          <DetalleParametro
-            idTambo={tamboSel.id}
-            categoria="Vaquillona"
-            porcentaje={porcentaje}
-          />
-          <DetalleParametro
-            idTambo={tamboSel.id}
-            categoria="Vaca"
-            porcentaje={porcentaje}
-          />
-        </>
-        :
-        <SelectTambo />
+        {
+          selectedChange !== null && (
+            <Button
+              style={{ fontWeight: "bold", borderRadius: "10px", width: "20%", height: "50px", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center" }}
+              variant="primary"
+              block
+              className='botonAplicar'
+              onClick={handleApplyChange}
+            >Aplicar</Button>
+          )
+        }
+      </div >
+      {
+        tamboSel ?
+          <>
+            < DetalleParametro
+              idTambo={tamboSel.id}
+              categoria="Vaquillona"
+              porcentaje={porcentaje}
+            />
+            <DetalleParametro
+              idTambo={tamboSel.id}
+              categoria="Vaca"
+              porcentaje={porcentaje}
+            />
+          </>
+          :
+          <SelectTambo />
       }
-    </Layout>
+    </Layout >
+
   );
 };
 

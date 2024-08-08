@@ -96,7 +96,7 @@ function Dirsa() {
                     })
                   }
                   else {
-                    console.log(rp + "no existe pelotudo")
+                    console.log(rp + "no existe ")
                   }
                 });
               } catch (error) { console.log(error) }
@@ -213,7 +213,7 @@ function Dirsa() {
                     })
                   }
                   else {
-                    console.log("no existe pelotudo")
+                    console.log("no existe ")
                   }
                 });
               } catch (error) { console.log(error) }
@@ -243,7 +243,7 @@ function Dirsa() {
                     })
                   }
                   else {
-                    console.log(rp + "no existe pelotudo")
+                    console.log(rp + "no existe ")
                   }
                 });
               } catch (error) { console.log(error) }
@@ -274,7 +274,7 @@ function Dirsa() {
                     })
                   }
                   else {
-                    console.log(rp + "no existe pelotudo")
+                    console.log(rp + "no existe ")
                   }
                 });
               } catch (error) { console.log(error) }
@@ -306,7 +306,7 @@ function Dirsa() {
                     })
                   }
                   else {
-                    console.log(rp + "no existe pelotudo")
+                    console.log(rp + "no existe ")
                   }
                 });
               } catch (error) { console.log(error) }
@@ -338,7 +338,7 @@ function Dirsa() {
                     })
                   }
                   else {
-                    console.log(rp + "no existe pelotudo")
+                    console.log(rp + "no existe ")
                   }
                 });
               } catch (error) { console.log(error) }
@@ -371,7 +371,7 @@ function Dirsa() {
                     })
                   }
                   else {
-                    console.log(rp + "no existe pelotudo")
+                    console.log(rp + "no existe ")
                   }
                 });
               } catch (error) { console.log(error) }
@@ -403,7 +403,7 @@ function Dirsa() {
                     })
                   }
                   else {
-                    console.log(rp + "no existe pelotudo")
+                    console.log(rp + "no existe ")
                   }
                 });
               } catch (error) { console.log(error) }

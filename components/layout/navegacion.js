@@ -31,13 +31,13 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
             dispatch(updateValor(porc));
         }
     }, [porc, dispatch]);
-    
+
     useEffect(() => {
         if (tamboSel && tamboSel.porcentaje !== undefined) {
             dispatch(updateValor(tamboSel.porcentaje));
         }
     }, [tamboSel, dispatch]);
-    
+
 
     useEffect(() => {
         tambos && obtenerAlertas();
@@ -151,7 +151,7 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
     // Asegúrate de actualizar el estado de último cambio después de realizar un nuevo cambio
     const handleCambio = async (nuevoValor) => {
         // Suponiendo que tienes una función para guardar el cambio en la base de datos
-        await actualizarRacion(nuevoValor); 
+        await actualizarRacion(nuevoValor);
         await obtenerUltimoCambio(); // Actualizar el último cambio después de guardar
     };
 
@@ -232,14 +232,14 @@ const Navegacion = ({ collapsed, toggled, handleToggleSidebar, handleCollapsedCh
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-               
+
                     {ultimoCambio ? (
-                         <div className="historial-container">
-                        <ContenedorAlertas>
-                            <div className="historial-item" key={ultimoCambio.id}>
-                            <div className="historial-fecha">{formatFecha(ultimoCambio.fecha)}:</div> {ultimoCambio.mensaje}
-                            </div>
-                        </ContenedorAlertas>
+                        <div className="historial-container">
+                            <ContenedorAlertas>
+                                <div className="historial-item" key={ultimoCambio.id}>
+                                    <div className="historial-fecha">{formatFecha(ultimoCambio.fecha)}:</div> {ultimoCambio.mensaje}
+                                </div>
+                            </ContenedorAlertas>
                         </div>
                     ) : (
                         <Alert variant="warning">No se registran alertas</Alert>

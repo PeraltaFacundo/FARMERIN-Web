@@ -118,7 +118,7 @@ const Aside = ({ collapsed, toggled, handleToggleSidebar }) => {
               <MenuItem>Grafico de Ingreso </MenuItem>
             </Link>
             <Link href="/NoRegs">
-              <MenuItem>No Registradas</MenuItem>
+              <MenuItem>Verificación de Ingreso</MenuItem>
             </Link>
           </SubMenu>
         </Menu>
@@ -150,13 +150,6 @@ const Aside = ({ collapsed, toggled, handleToggleSidebar }) => {
         <Link href="/ayuda">
             <MenuItem icon={<FaHandsHelping size={15} />}>
               Ayuda</MenuItem>
-          </Link>
-
-        </Menu>
-        <Menu>
-        <Link href="/MOTIVODEBAJA">
-            <MenuItem icon={<FaHandsHelping size={15} />}>
-              ANIMALES QUE ESTAN EN BAJA </MenuItem>
           </Link>
 
         </Menu>
